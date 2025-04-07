@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Transfer Funds - Bank System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-paper-plane me-2"></i>Transfer Funds</h2>
+        <p class="text-muted">Send money to another user</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-exchange-alt me-2"></i>Transfer Details
+            </div>
+            <div class="card-body">
+                <form id="transfer-form">
+                    <div class="mb-3">
+                        <label for="transfer-username" class="form-label">Recipient Username</label>
+                        <input type="text" class="form-control" id="transfer-username" required>
+                        <div class="form-text">Enter the username of the person you want to send money to.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="transfer-amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="transfer-amount" min="1" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Send Transfer</button>
+                        <a href="/account" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle me-2"></i>Transfer Information
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Transfers are processed instantly.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        Make sure to double-check the recipient's username.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        You can view your transfer history in the <a href="/transactions">Transactions</a> page.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-lock text-danger me-2"></i>
+                        Transfers cannot be reversed once completed.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is authenticated
+        if (!protectRoute()) return;
+        
+        // Initialize transfer form
+        initTransferPage();
+    });
+</script>
+{% endblock %}

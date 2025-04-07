@@ -6,11 +6,11 @@ from django.contrib.auth.models import AbstractUser
 class CustomUser(AbstractUser):
     phone=models.CharField(max_length=15)
     profile_photo=models.ImageField(upload_to='profile_photos/',blank=True,null=True)
-
+    is_manager=models.BooleanField(default=False, help_text='Designates whether the user can manage other users')
 
     def __str__(self):
         return self.username
-    
+
 class Account(models.Model):
     user=models.OneToOneField(CustomUser,on_delete=models.CASCADE)
     balance=models.DecimalField(max_digits=12,decimal_places=2,default=0)
@@ -18,7 +18,7 @@ class Account(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s account"
-    
+
 class Transaction(models.Model):
     TRANSACTION_TYPES = (
         ('deposit', 'Deposit'),
@@ -36,7 +36,7 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type} - {self.amount}"
-    
+
 
 # Transfer model to manage user-to-user transfers.
 class Transfer(models.Model):
@@ -54,7 +54,7 @@ class Transfer(models.Model):
         self.from_account.save()
         self.to_account.save()
         super().save(*args, **kwargs)
-        
+
         # Log transfer details as transactions.
         Transaction.objects.create(
             account=self.from_account,

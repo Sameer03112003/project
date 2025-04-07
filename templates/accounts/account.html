@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}My Account - Bank System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-user-circle me-2"></i>My Account</h2>
+        <p class="text-muted">View your account details and manage your funds</p>
+    </div>
+</div>
+
+<div id="account-container">
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-exchange-alt me-2"></i>Recent Transactions
+            </div>
+            <div class="card-body">
+                <div id="recent-transactions">
+                    <div class="text-center">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading recent transactions...</p>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="/transactions" class="btn btn-outline-primary">View All Transactions</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-paper-plane me-2"></i>Quick Transfer
+            </div>
+            <div class="card-body">
+                <form id="quick-transfer-form">
+                    <div class="mb-3">
+                        <label for="quick-transfer-username" class="form-label">Recipient Username</label>
+                        <input type="text" class="form-control" id="quick-transfer-username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick-transfer-amount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="quick-transfer-amount" min="1" step="0.01" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">Send Transfer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is authenticated
+        if (!protectRoute()) return;
+        
+        // Load recent transactions
+        loadRecentTransactions();
+        
+        // Setup quick transfer form
+        const quickTransferForm = document.getElementById('quick-transfer-form');
+        if (quickTransferForm) {
+            quickTransferForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const toUsername = document.getElementById('quick-transfer-username').value;
+                const amount = document.getElementById('quick-transfer-amount').value;
+                
+                const data = {
+                    to_username: toUsername,
+                    amount
+                };
+                
+                try {
+                    const result = await apiRequest('transfer/', 'POST', data);
+                    if (result) {
+                        showAlert('Transfer successful!');
+                        quickTransferForm.reset();
+                        
+                        // Reload account info and recent transactions
+                        initAccountPage();
+                        loadRecentTransactions();
+                    }
+                } catch (error) {
+                    showAlert(error.message || 'Transfer failed', 'danger');
+                }
+            });
+        }
+    });
+    
+    // Load recent transactions
+    async function loadRecentTransactions() {
+        const recentTransactionsContainer = document.getElementById('recent-transactions');
+        if (!recentTransactionsContainer) return;
+        
+        try {
+            const transactions = await apiRequest('transactions/?limit=5');
+            if (!transactions) return;
+            
+            if (transactions.results.length === 0) {
+                recentTransactionsContainer.innerHTML = '<p class="text-center">No recent transactions</p>';
+                return;
+            }
+            
+            let transactionsHTML = '<div class="list-group">';
+            
+            transactions.results.forEach(transaction => {
+                const transactionClass = `transaction-${transaction.transaction_type.toLowerCase().replace('_', '-')}`;
+                const icon = getTransactionIcon(transaction.transaction_type);
+                const amountClass = transaction.transaction_type === 'deposit' || transaction.transaction_type === 'transfer_in' 
+                    ? 'text-success' : 'text-danger';
+                
+                transactionsHTML += `
+                    <div class="list-group-item transaction-item ${transactionClass} p-2">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                ${icon} ${formatTransactionType(transaction.transaction_type)}
+                            </h6>
+                            <small>${formatDate(transaction.timestamp)}</small>
+                        </div>
+                        <div class="d-flex w-100 justify-content-between">
+                            <small>${transaction.description || 'No description'}</small>
+                            <strong class="${amountClass}">${formatCurrency(transaction.amount)}</strong>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            transactionsHTML += '</div>';
+            recentTransactionsContainer.innerHTML = transactionsHTML;
+            
+        } catch (error) {
+            console.error('Error loading recent transactions:', error);
+            recentTransactionsContainer.innerHTML = '<div class="alert alert-danger">Error loading transactions</div>';
+        }
+    }
+</script>
+{% endblock %}

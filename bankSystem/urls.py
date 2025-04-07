@@ -15,10 +15,31 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from Accounts.frontend_views import (
+    home_view, login_view, register_view, account_view,
+    transactions_view, transfer_view, manager_view
+)
 
 urlpatterns = [
+    # Admin URLs
     path('admin/', admin.site.urls),
-    path('api/',include('Accounts.urls'))
 
+    # API URLs
+    path('api/', include('Accounts.urls')),
+
+    # Frontend URLs
+    path('', home_view, name='home'),
+    path('login/', login_view, name='login'),
+    path('register/', register_view, name='register'),
+    path('account/', account_view, name='account'),
+    path('transactions/', transactions_view, name='transactions'),
+    path('transfer/', transfer_view, name='transfer'),
+    path('manager/', manager_view, name='manager'),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

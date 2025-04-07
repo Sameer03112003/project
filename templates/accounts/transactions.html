@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions - Bank System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-exchange-alt me-2"></i>Transaction History</h2>
+        <p class="text-muted">View all your account transactions</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-filter me-2"></i>Filter Transactions</span>
+                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="filterCollapse">
+                <div class="card-body">
+                    <form id="transaction-filter-form">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-type" class="form-label">Transaction Type</label>
+                                <select class="form-select" id="filter-type">
+                                    <option value="">All Types</option>
+                                    <option value="deposit">Deposits</option>
+                                    <option value="withdraw">Withdrawals</option>
+                                    <option value="transfer_in">Transfers Received</option>
+                                    <option value="transfer_out">Transfers Sent</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-date-from" class="form-label">From Date</label>
+                                <input type="date" class="form-control" id="filter-date-from">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-date-to" class="form-label">To Date</label>
+                                <input type="date" class="form-control" id="filter-date-to">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-amount-min" class="form-label">Min Amount</label>
+                                <input type="number" class="form-control" id="filter-amount-min" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-amount-max" class="form-label">Max Amount</label>
+                                <input type="number" class="form-control" id="filter-amount-max" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-search" class="form-label">Search Description</label>
+                                <input type="text" class="form-control" id="filter-search" placeholder="Search...">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary me-2" id="reset-filters">Reset</button>
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="transactions-container">
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is authenticated
+        if (!protectRoute()) return;
+        
+        // Setup filter form
+        const filterForm = document.getElementById('transaction-filter-form');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                applyFilters();
+            });
+            
+            // Reset filters
+            document.getElementById('reset-filters').addEventListener('click', function() {
+                filterForm.reset();
+                applyFilters();
+            });
+        }
+    });
+    
+    // Apply transaction filters
+    async function applyFilters() {
+        const type = document.getElementById('filter-type').value;
+        const dateFrom = document.getElementById('filter-date-from').value;
+        const dateTo = document.getElementById('filter-date-to').value;
+        const amountMin = document.getElementById('filter-amount-min').value;
+        const amountMax = document.getElementById('filter-amount-max').value;
+        const search = document.getElementById('filter-search').value;
+        
+        let queryParams = [];
+        
+        if (type) queryParams.push(`transaction_type=${type}`);
+        if (dateFrom) queryParams.push(`date_from=${dateFrom}`);
+        if (dateTo) queryParams.push(`date_to=${dateTo}`);
+        if (amountMin) queryParams.push(`amount_min=${amountMin}`);
+        if (amountMax) queryParams.push(`amount_max=${amountMax}`);
+        if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
+        
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        try {
+            const transactions = await apiRequest(`transactions/${queryString}`);
+            if (transactions) {
+                updateTransactionsDisplay(transactions);
+            }
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            showAlert('Error applying filters', 'danger');
+        }
+    }
+    
+    // Update transactions display
+    function updateTransactionsDisplay(transactions) {
+        const transactionsContainer = document.getElementById('transactions-container');
+        if (!transactionsContainer) return;
+        
+        if (transactions.results.length === 0) {
+            transactionsContainer.innerHTML = '<div class="alert alert-info">No transactions found</div>';
+            return;
+        }
+        
+        let transactionsHTML = '<div class="list-group">';
+        
+        transactions.results.forEach(transaction => {
+            const transactionClass = `transaction-${transaction.transaction_type.toLowerCase().replace('_', '-')}`;
+            const icon = getTransactionIcon(transaction.transaction_type);
+            const amountClass = transaction.transaction_type === 'deposit' || transaction.transaction_type === 'transfer_in' 
+                ? 'text-success' : 'text-danger';
+            
+            transactionsHTML += `
+                <div class="list-group-item transaction-item ${transactionClass}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">
+                            ${icon} ${formatTransactionType(transaction.transaction_type)}
+                        </h5>
+                        <small>${formatDate(transaction.timestamp)}</small>
+                    </div>
+                    <p class="mb-1">${transaction.description || 'No description'}</p>
+                    <div class="d-flex w-100 justify-content-between">
+                        <small>Transaction ID: ${transaction.id}</small>
+                        <strong class="${amountClass}">${formatCurrency(transaction.amount)}</strong>
+                    </div>
+                </div>
+            `;
+        });
+        
+        transactionsHTML += '</div>';
+        
+        // Add pagination if needed
+        if (transactions.count > transactions.results.length) {
+            const totalPages = Math.ceil(transactions.count / 10);
+            const currentPage = transactions.current || 1;
+            
+            transactionsHTML += `
+                <nav aria-label="Transaction pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+                        </li>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                transactionsHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+            
+            transactionsHTML += `
+                        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            `;
+        }
+        
+        transactionsContainer.innerHTML = transactionsHTML;
+        
+        // Setup pagination event listeners
+        const pageLinks = document.querySelectorAll('.page-link');
+        pageLinks.forEach(link => {
+            link.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                if (page) {
+                    // Get current filter values
+                    const type = document.getElementById('filter-type').value;
+                    const dateFrom = document.getElementById('filter-date-from').value;
+                    const dateTo = document.getElementById('filter-date-to').value;
+                    const amountMin = document.getElementById('filter-amount-min').value;
+                    const amountMax = document.getElementById('filter-amount-max').value;
+                    const search = document.getElementById('filter-search').value;
+                    
+                    let queryParams = [`page=${page}`];
+                    
+                    if (type) queryParams.push(`transaction_type=${type}`);
+                    if (dateFrom) queryParams.push(`date_from=${dateFrom}`);
+                    if (dateTo) queryParams.push(`date_to=${dateTo}`);
+                    if (amountMin) queryParams.push(`amount_min=${amountMin}`);
+                    if (amountMax) queryParams.push(`amount_max=${amountMax}`);
+                    if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
+                    
+                    const queryString = `?${queryParams.join('&')}`;
+                    
+                    const pageTransactions = await apiRequest(`transactions/${queryString}`);
+                    if (pageTransactions) {
+                        updateTransactionsDisplay(pageTransactions);
+                    }
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,146 @@
+/* General Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+}
+
+footer {
+    margin-top: auto;
+}
+
+/* Card Styles */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: bold;
+}
+
+/* Form Styles */
+.form-control {
+    border-radius: 5px;
+    padding: 10px 15px;
+}
+
+.btn {
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-weight: 600;
+}
+
+/* Dashboard Styles */
+.balance-card {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+}
+
+.balance-amount {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+/* Transaction Styles */
+.transaction-item {
+    border-left: 5px solid #007bff;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+    background-color: #f1f8ff;
+}
+
+.transaction-deposit {
+    border-left-color: #28a745;
+}
+
+.transaction-withdraw {
+    border-left-color: #dc3545;
+}
+
+.transaction-transfer-in {
+    border-left-color: #17a2b8;
+}
+
+.transaction-transfer-out {
+    border-left-color: #fd7e14;
+}
+
+/* Manager Dashboard Styles */
+.user-card {
+    transition: all 0.3s ease;
+}
+
+.user-card:hover {
+    background-color: #f1f8ff;
+}
+
+.user-actions {
+    visibility: hidden;
+}
+
+.user-card:hover .user-actions {
+    visibility: visible;
+}
+
+/* Login/Register Styles */
+.auth-card {
+    max-width: 500px;
+    margin: 50px auto;
+}
+
+.auth-card .card-header {
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .balance-amount {
+        font-size: 2rem;
+    }
+    
+    .card {
+        margin-bottom: 20px;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* Alert Styles */
+.custom-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    animation: slideIn 0.5s ease-in-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}

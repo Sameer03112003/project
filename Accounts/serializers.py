@@ -3,28 +3,29 @@ from django.contrib.auth import get_user_model
 from .models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.db import transaction
 
-CustomUser=get_user_model   # inherit fields from base user model
+CustomUser=get_user_model()   # inherit fields from base user model
 
-class UserSerializer(serializers.Serializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=CustomUser
-        fields=['id','first_name','last_name','username','password','email','phone','Profile_photo']
+        fields=['id','first_name','last_name','username','password','email','phone','profile_photo']
         extra_kwargs={'password':{'write_only':True}}
 
     def create(self, validated_data):
         user=CustomUser.objects.create_user(**validated_data)
         Account.objects.create(user=user)
         return user
-    
 
-class AccountSerializer(serializers.Serializer):
+
+class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model=Account
         fields=['id','user','balance']
 
 
-class TransactionSerializer(serializers.Serializer):
+class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model=Transaction
         fields=['id', 'account', 'transaction_type', 'amount', 'description', 'timestamp']
@@ -55,7 +56,7 @@ class TransferSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('to_username')
         return super().create(validated_data)
-    
+
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -71,7 +72,7 @@ class LoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Unable to log in with provided credentials.", code="authorization")
         else:
             raise serializers.ValidationError("Must include 'username' and 'password'.", code="authorization")
-        
+
         data["user"] = user
         return data
 
@@ -81,3 +82,40 @@ class LoginSerializer(serializers.Serializer):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def validate(self, attrs):
+        self.token = attrs['refresh']
+        return attrs
+
+    def save(self):
+        try:
+            # Blacklist the refresh token
+            RefreshToken(self.token).blacklist()
+            return True
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed user information (for managers)"""
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'profile_photo', 'is_active', 'is_manager', 'date_joined']
+        read_only_fields = ['id', 'date_joined']
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user information (for managers)"""
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'email', 'phone', 'is_active', 'is_manager']
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

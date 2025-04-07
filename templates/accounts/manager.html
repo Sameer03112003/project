@@ -1,0 +1,563 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Dashboard - Bank System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-users-cog me-2"></i>Manager Dashboard</h2>
+        <p class="text-muted">Manage users and accounts</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-search me-2"></i>Search Users</span>
+                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#searchCollapse">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="searchCollapse">
+                <div class="card-body">
+                    <form id="user-search-form">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="search-username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="search-username" placeholder="Search by username">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="search-email" class="form-label">Email</label>
+                                <input type="text" class="form-control" id="search-email" placeholder="Search by email">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="search-name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="search-name" placeholder="Search by name">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-status" class="form-label">Status</label>
+                                <select class="form-select" id="filter-status">
+                                    <option value="">All</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="filter-role" class="form-label">Role</label>
+                                <select class="form-select" id="filter-role">
+                                    <option value="">All</option>
+                                    <option value="manager">Managers</option>
+                                    <option value="user">Regular Users</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="sort-by" class="form-label">Sort By</label>
+                                <select class="form-select" id="sort-by">
+                                    <option value="username">Username</option>
+                                    <option value="date_joined">Date Joined</option>
+                                    <option value="last_login">Last Login</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary me-2" id="reset-search">Reset</button>
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-user-plus me-2"></i>User Management
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-end mb-3">
+                    <button class="btn btn-success" id="create-user-btn">
+                        <i class="fas fa-plus-circle me-1"></i>Create New User
+                    </button>
+                </div>
+                
+                <div id="users-container">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Edit Modal -->
+<div class="modal fade" id="userEditModal" tabindex="-1" aria-labelledby="userEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="userEditModalLabel">Edit User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="user-edit-form">
+                    <input type="hidden" id="edit-user-id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-first-name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="edit-first-name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-last-name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="edit-last-name" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-phone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="edit-phone">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="edit-is-active">
+                                <label class="form-check-label" for="edit-is-active">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="edit-is-manager">
+                                <label class="form-check-label" for="edit-is-manager">Manager</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-user-btn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="createUserModalLabel">Create New User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-user-form">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create-username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="create-username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create-password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="create-password" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create-first-name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="create-first-name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create-last-name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="create-last-name" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="create-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create-phone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="create-phone">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="create-is-active" checked>
+                                <label class="form-check-label" for="create-is-active">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="create-is-manager">
+                                <label class="form-check-label" for="create-is-manager">Manager</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="create-user-submit">Create User</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is authenticated and is a manager
+        if (!protectManagerRoute()) return;
+        
+        // Initialize manager page
+        initManagerPage();
+        
+        // Setup search form
+        const searchForm = document.getElementById('user-search-form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                searchUsers();
+            });
+            
+            // Reset search
+            document.getElementById('reset-search').addEventListener('click', function() {
+                searchForm.reset();
+                searchUsers();
+            });
+        }
+        
+        // Setup create user button
+        const createUserBtn = document.getElementById('create-user-btn');
+        if (createUserBtn) {
+            createUserBtn.addEventListener('click', function() {
+                const createUserModal = new bootstrap.Modal(document.getElementById('createUserModal'));
+                createUserModal.show();
+            });
+        }
+        
+        // Setup create user form submission
+        const createUserSubmit = document.getElementById('create-user-submit');
+        if (createUserSubmit) {
+            createUserSubmit.addEventListener('click', createUser);
+        }
+        
+        // Setup save user button
+        const saveUserBtn = document.getElementById('save-user-btn');
+        if (saveUserBtn) {
+            saveUserBtn.addEventListener('click', updateUser);
+        }
+    });
+    
+    // Search users
+    async function searchUsers() {
+        const username = document.getElementById('search-username').value;
+        const email = document.getElementById('search-email').value;
+        const name = document.getElementById('search-name').value;
+        const status = document.getElementById('filter-status').value;
+        const role = document.getElementById('filter-role').value;
+        const sortBy = document.getElementById('sort-by').value;
+        
+        let queryParams = [];
+        
+        if (username) queryParams.push(`username=${encodeURIComponent(username)}`);
+        if (email) queryParams.push(`email=${encodeURIComponent(email)}`);
+        if (name) queryParams.push(`name=${encodeURIComponent(name)}`);
+        if (status) queryParams.push(`is_active=${status === 'active' ? 'true' : 'false'}`);
+        if (role) queryParams.push(`is_manager=${role === 'manager' ? 'true' : 'false'}`);
+        if (sortBy) queryParams.push(`ordering=${sortBy}`);
+        
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        
+        try {
+            const users = await apiRequest(`manager/users/${queryString}`);
+            if (users) {
+                updateUsersDisplay(users);
+            }
+        } catch (error) {
+            console.error('Error searching users:', error);
+            showAlert('Error searching users', 'danger');
+        }
+    }
+    
+    // Update users display
+    function updateUsersDisplay(users) {
+        const usersContainer = document.getElementById('users-container');
+        if (!usersContainer) return;
+        
+        if (users.results.length === 0) {
+            usersContainer.innerHTML = '<div class="alert alert-info">No users found</div>';
+            return;
+        }
+        
+        let usersHTML = '<div class="row">';
+        
+        users.results.forEach(user => {
+            const statusBadge = user.is_active 
+                ? '<span class="badge bg-success">Active</span>' 
+                : '<span class="badge bg-danger">Inactive</span>';
+                
+            const managerBadge = user.is_manager 
+                ? '<span class="badge bg-primary ms-1">Manager</span>' 
+                : '';
+                
+            usersHTML += `
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card user-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">${user.username}</h5>
+                                <div>
+                                    ${statusBadge}
+                                    ${managerBadge}
+                                </div>
+                            </div>
+                            <p class="card-text">
+                                <strong>Name:</strong> ${user.first_name} ${user.last_name}<br>
+                                <strong>Email:</strong> ${user.email}<br>
+                                <strong>Phone:</strong> ${user.phone || 'N/A'}<br>
+                                <strong>Joined:</strong> ${formatDate(user.date_joined)}
+                            </p>
+                            <div class="d-flex justify-content-between mt-3">
+                                <button class="btn btn-sm btn-warning edit-user" data-user-id="${user.id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-user" data-user-id="${user.id}" data-user-name="${user.username}">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        usersHTML += '</div>';
+        
+        // Add pagination if needed
+        if (users.count > users.results.length) {
+            const totalPages = Math.ceil(users.count / 10);
+            const currentPage = users.current || 1;
+            
+            usersHTML += `
+                <nav aria-label="Users pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+                        </li>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                usersHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+            
+            usersHTML += `
+                        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            `;
+        }
+        
+        usersContainer.innerHTML = usersHTML;
+        
+        // Setup event listeners for user actions
+        setupUserActionListeners();
+        
+        // Setup pagination event listeners
+        const pageLinks = document.querySelectorAll('.page-link');
+        pageLinks.forEach(link => {
+            link.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                if (page) {
+                    // Get current search values
+                    const username = document.getElementById('search-username').value;
+                    const email = document.getElementById('search-email').value;
+                    const name = document.getElementById('search-name').value;
+                    const status = document.getElementById('filter-status').value;
+                    const role = document.getElementById('filter-role').value;
+                    const sortBy = document.getElementById('sort-by').value;
+                    
+                    let queryParams = [`page=${page}`];
+                    
+                    if (username) queryParams.push(`username=${encodeURIComponent(username)}`);
+                    if (email) queryParams.push(`email=${encodeURIComponent(email)}`);
+                    if (name) queryParams.push(`name=${encodeURIComponent(name)}`);
+                    if (status) queryParams.push(`is_active=${status === 'active' ? 'true' : 'false'}`);
+                    if (role) queryParams.push(`is_manager=${role === 'manager' ? 'true' : 'false'}`);
+                    if (sortBy) queryParams.push(`ordering=${sortBy}`);
+                    
+                    const queryString = `?${queryParams.join('&')}`;
+                    
+                    const pageUsers = await apiRequest(`manager/users/${queryString}`);
+                    if (pageUsers) {
+                        updateUsersDisplay(pageUsers);
+                    }
+                }
+            });
+        });
+    }
+    
+    // Create a new user
+    async function createUser() {
+        const username = document.getElementById('create-username').value;
+        const password = document.getElementById('create-password').value;
+        const firstName = document.getElementById('create-first-name').value;
+        const lastName = document.getElementById('create-last-name').value;
+        const email = document.getElementById('create-email').value;
+        const phone = document.getElementById('create-phone').value;
+        const isActive = document.getElementById('create-is-active').checked;
+        const isManager = document.getElementById('create-is-manager').checked;
+        
+        const userData = {
+            username,
+            password,
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone,
+            is_active: isActive,
+            is_manager: isManager
+        };
+        
+        try {
+            const result = await apiRequest('manager/users/', 'POST', userData);
+            if (result) {
+                showAlert('User created successfully!', 'success');
+                
+                // Close the modal
+                const createUserModal = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
+                createUserModal.hide();
+                
+                // Reset the form
+                document.getElementById('create-user-form').reset();
+                
+                // Reload the users list
+                initManagerPage();
+            }
+        } catch (error) {
+            console.error('Error creating user:', error);
+            showAlert('Error creating user: ' + error.message, 'danger');
+        }
+    }
+    
+    // Load user data for editing
+    async function loadUserForEdit(userId) {
+        try {
+            const user = await apiRequest(`manager/users/${userId}/`);
+            if (user) {
+                document.getElementById('edit-user-id').value = user.id;
+                document.getElementById('edit-first-name').value = user.first_name;
+                document.getElementById('edit-last-name').value = user.last_name;
+                document.getElementById('edit-email').value = user.email;
+                document.getElementById('edit-phone').value = user.phone || '';
+                document.getElementById('edit-is-active').checked = user.is_active;
+                document.getElementById('edit-is-manager').checked = user.is_manager;
+                
+                // Show the modal
+                const userEditModal = new bootstrap.Modal(document.getElementById('userEditModal'));
+                userEditModal.show();
+            }
+        } catch (error) {
+            console.error('Error loading user for edit:', error);
+            showAlert('Error loading user data', 'danger');
+        }
+    }
+    
+    // Update user
+    async function updateUser() {
+        const userId = document.getElementById('edit-user-id').value;
+        const firstName = document.getElementById('edit-first-name').value;
+        const lastName = document.getElementById('edit-last-name').value;
+        const email = document.getElementById('edit-email').value;
+        const phone = document.getElementById('edit-phone').value;
+        const isActive = document.getElementById('edit-is-active').checked;
+        const isManager = document.getElementById('edit-is-manager').checked;
+        
+        const userData = {
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone,
+            is_active: isActive,
+            is_manager: isManager
+        };
+        
+        try {
+            const result = await apiRequest(`manager/users/${userId}/update/`, 'PUT', userData);
+            if (result) {
+                showAlert('User updated successfully!', 'success');
+                
+                // Close the modal
+                const userEditModal = bootstrap.Modal.getInstance(document.getElementById('userEditModal'));
+                userEditModal.hide();
+                
+                // Reload the users list
+                initManagerPage();
+            }
+        } catch (error) {
+            console.error('Error updating user:', error);
+            showAlert('Error updating user: ' + error.message, 'danger');
+        }
+    }
+    
+    // Delete user
+    async function deleteUser(userId, username) {
+        if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+            try {
+                const result = await apiRequest(`manager/users/${userId}/delete/`, 'DELETE');
+                if (result) {
+                    showAlert(`User "${username}" has been deleted successfully.`, 'success');
+                    
+                    // Reload the users list
+                    initManagerPage();
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showAlert('Error deleting user: ' + error.message, 'danger');
+            }
+        }
+    }
+    
+    // Setup user action listeners
+    function setupUserActionListeners() {
+        // Edit user
+        const editButtons = document.querySelectorAll('.edit-user');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                loadUserForEdit(userId);
+            });
+        });
+        
+        // Delete user
+        const deleteButtons = document.querySelectorAll('.delete-user');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const username = this.getAttribute('data-user-name');
+                deleteUser(userId, username);
+            });
+        });
+    }
+</script>
+{% endblock %}
